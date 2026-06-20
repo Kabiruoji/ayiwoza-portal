@@ -1,4 +1,34 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Component } from "react";
+
+// ── Error Boundary: shows errors on screen instead of crashing silently ──────
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, info: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    this.setState({ info });
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{minHeight:"100vh",background:"#1B2D6B",color:"#fff",padding:20,fontFamily:"monospace",fontSize:12,overflowY:"auto"}}>
+          <h2 style={{color:"#FF8A80"}}>⚠️ App Error</h2>
+          <p style={{whiteSpace:"pre-wrap",background:"rgba(0,0,0,.3)",padding:12,borderRadius:8}}>
+            {String(this.state.error && this.state.error.toString())}
+          </p>
+          {this.state.info && <pre style={{whiteSpace:"pre-wrap",fontSize:10,opacity:.7,background:"rgba(0,0,0,.3)",padding:12,borderRadius:8}}>{this.state.info.componentStack}</pre>}
+          <button onClick={()=>window.location.reload()} style={{marginTop:16,background:"#C9962B",border:"none",borderRadius:8,padding:"10px 20px",fontWeight:800,cursor:"pointer"}}>Reload App</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 
 // ── Supabase config ───────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://pscchcdqdlcoeoiuohvd.supabase.co";
@@ -681,7 +711,7 @@ function ProfileModal({user,setUser,members,saveM,closeModal,showToast}) {
 }
 
 // ── Main App ──────────────────────────────────────────────────────────────────
-export default function App() {
+function AppInner() {
   const [members,setMembers]=useState(INIT_MEMBERS);
   const [contribs,setContribs]=useState({});
   const [loans,setLoans]=useState([]);
@@ -697,14 +727,19 @@ export default function App() {
   const [stab,setStab]=useState("marriage");
   const [ready,setReady]=useState(false);
 
-  useEffect(()=>{(async()=>{
-    try{const v=await sbGet("ay4-members");if(v)setMembers(v);}catch{}
-    try{const v=await sbGet("ay4-contribs");if(v)setContribs(v);}catch{}
-    try{const v=await sbGet("ay4-loans");if(v)setLoans(v);}catch{}
-    try{const v=await sbGet("ay4-events");if(v)setEvents(v);}catch{}
-    try{const v=await sbGet("ay4-bulk");if(v)setBulkOrders(v);}catch{}
-    try{const v=await sbGet("ay4-loanapps");if(v)setLoanApplications(v);}catch{}
-    try{const v=await sbGet("ay4-bulkreqs");if(v)setBulkRequests(v);}catch{}
+  useEffect(()=>{
+    const timeout = setTimeout(()=>{
+      setReady(r=>{ if(!r) console.warn("Load timed out — forcing ready state"); return true; });
+    }, 8000);
+    (async()=>{
+    try{const v=await sbGet("ay4-members");if(v)setMembers(v);}catch(e){console.error("members load failed",e);}
+    try{const v=await sbGet("ay4-contribs");if(v)setContribs(v);}catch(e){console.error("contribs load failed",e);}
+    try{const v=await sbGet("ay4-loans");if(v)setLoans(v);}catch(e){console.error("loans load failed",e);}
+    try{const v=await sbGet("ay4-events");if(v)setEvents(v);}catch(e){console.error("events load failed",e);}
+    try{const v=await sbGet("ay4-bulk");if(v)setBulkOrders(v);}catch(e){console.error("bulk load failed",e);}
+    try{const v=await sbGet("ay4-loanapps");if(v)setLoanApplications(v);}catch(e){console.error("loanapps load failed",e);}
+    try{const v=await sbGet("ay4-bulkreqs");if(v)setBulkRequests(v);}catch(e){console.error("bulkreqs load failed",e);}
+    clearTimeout(timeout);
     setReady(true);
   })();},[]);
 
@@ -1307,5 +1342,13 @@ function LoginPage({members,onLogin}) {
         <p style={{textAlign:"center",marginTop:12,fontSize:11,color:"#8A96A8"}}>Default: <strong style={{color:"#1B2D6B"}}>Firstname@2026</strong></p>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
   );
 }
