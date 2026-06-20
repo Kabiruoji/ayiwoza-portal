@@ -1,7 +1,8 @@
 {
   "name": "Ayiwoza Committee of Friends",
   "short_name": "Ayiwoza",
-  "start_url": "/",
+  "id": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#1B2D6B",
   "theme_color": "#1B2D6B",
