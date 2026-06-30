@@ -760,9 +760,14 @@ function AppInner() {
   const totC=type=>members.reduce((s,m)=>s+getMT(m.id,type),0);
   const totOut=()=>loans.filter(l=>l.status==="active").reduce((s,l)=>s+Number(l.balance),0);
   const totP=()=>loans.reduce((s,l)=>s+Number(l.profit||0),0);
-  const loanPool=()=>totC("savings")*.7;
-  const reserve=()=>totC("savings")*.3;
+  // Loan pool = 70% of (savings + monthly dues)
+  const loanableBase=()=>totC("savings")+totC("monthly");
+  const loanPool=()=>loanableBase()*.7;
+  const reserve=()=>loanableBase()*.3;
+  // Profit share based on savings only
   const pShare=id=>totC("savings")>0&&totP()>0?(getMT(id,"savings")/totC("savings"))*totP():0;
+  // Grand total excludes social gifts (marriage & naming)
+  const grandTotal=()=>totC("savings")+totC("monthly");
 
   // social: gifts received by a member (recipientId === user.id)
   const getGiftsReceived=(uid,type)=>{
@@ -865,7 +870,7 @@ function AppInner() {
           </div>))}
         <div style={{display:"flex",justifyContent:"space-between",padding:"10px 14px"}}>
           <span style={{fontWeight:800,color:B.navy,fontSize:13}}>GRAND TOTAL</span>
-          <strong style={{color:B.navy,fontSize:15}}>₦{fmt(members.reduce((s,m)=>s+getMT(m.id),0))}</strong>
+          <strong style={{color:B.navy,fontSize:15}}>₦{fmt(grandTotal())}</strong>
         </div>
       </Card>
     </>;
@@ -1244,7 +1249,7 @@ function AppInner() {
         </Card>
         <Card mb={12}>
           <SecHead title="Fund Position"/>
-          {[["💰 Member Savings",`₦${fmt(totC("savings"))}`,B.green],["🏦 Loan Pool (70%)",`₦${fmt(loanPool())}`,B.blue],["🔒 Reserve (30%)",`₦${fmt(reserve())}`,B.gold],["📋 Outstanding",`₦${fmt(totOut())}`,B.red],["✅ Available to Lend",`₦${fmt(Math.max(0,loanPool()-totOut()))}`,B.navy],["💹 Total Profit",`₦${fmt(totP())}`,B.green]].map(([l,v,c])=>(
+          {[["💰 Member Savings",`₦${fmt(totC("savings"))}`,B.green],["📅 Monthly Dues",`₦${fmt(totC("monthly"))}`,B.blue],["🏦 Loan Pool (70% of Savings+Dues)",`₦${fmt(loanPool())}`,B.blue],["🔒 Reserve (30% of Savings+Dues)",`₦${fmt(reserve())}`,B.gold],["📋 Outstanding",`₦${fmt(totOut())}`,B.red],["✅ Available to Lend",`₦${fmt(Math.max(0,loanPool()-totOut()))}`,B.navy],["💹 Total Profit",`₦${fmt(totP())}`,B.green],["💍 Marriage Gifts",`₦${fmt(totC("marriage"))}`,B.gold],["👶 Naming Gifts",`₦${fmt(totC("naming"))}`,"#7B1FA2"]].map(([l,v,c])=>(
             <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"10px 14px",borderBottom:`1px solid ${B.border}`}}>
               <span style={{fontSize:12,color:B.textMid}}>{l}</span><strong style={{color:c,fontSize:13}}>{v}</strong>
             </div>))}
