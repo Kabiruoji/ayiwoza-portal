@@ -88,10 +88,10 @@ const INIT_MEMBERS = [
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const BULK_ITEMS = ["Rice","Beans","Maggi","Sugar","Milk","Bournvita","Palm Oil","Groundnut Oil","Other"];
 const CTYPES = [
-  {key:"savings", label:"Member Savings",  icon:"💰", min:2000, color:B.green},
-  {key:"monthly", label:"Monthly Dues",    icon:"📅", min:500,  color:B.blue},
-  {key:"marriage",label:"Marriage Gift",   icon:"💍", min:5000, color:B.gold},
-  {key:"naming",  label:"Naming Gift",     icon:"👶", min:500,  color:"#7B1FA2"},
+  {key:"savings", label:"Member Savings",  icon:"💰", min:0, color:B.green},
+  {key:"monthly", label:"Monthly Dues",    icon:"📅", min:0, color:B.blue},
+  {key:"marriage",label:"Marriage Gift",   icon:"💍", min:0, color:B.gold},
+  {key:"naming",  label:"Naming Gift",     icon:"👶", min:0, color:"#7B1FA2"},
 ];
 
 const fmt = n => Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -224,7 +224,7 @@ function AddContribModal({members,contribs,saveC,closeModal,showToast,ctype}) {
   const save=()=>{
     if(!mid||!mon||!amt){showToast("Fill all fields","error");return;}
     if(isSocial&&!recipientId){showToast("Select the recipient","error");return;}
-    if(Number(amt)<ct.min){showToast(`Min ₦${ct.min.toLocaleString()}`,"error");return;}
+    if(Number(amt)<=0){showToast("Enter a valid amount","error");return;}
     const entry={id:Date.now(),type:ct.key,amount:Number(amt),month:mon,year:Number(yr),date:today(),contributorId:mid};
     if(isSocial) entry.recipientId=recipientId;
     const nc={...contribs,[mid]:[...(contribs[mid]||[]),entry]};
@@ -244,7 +244,7 @@ function AddContribModal({members,contribs,saveC,closeModal,showToast,ctype}) {
         <option value="">Month…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></Fld>
       <Fld label="Year"><input style={IS} type="number" value={yr} onChange={e=>setYr(e.target.value)}/></Fld>
     </div>
-    <Fld label={`Amount (₦) — Min ₦${ct.min.toLocaleString()}`}><input style={IS} type="number" value={amt} onChange={e=>setAmt(e.target.value)}/></Fld>
+    <Fld label="Amount (₦)"><input style={IS} type="number" value={amt} onChange={e=>setAmt(e.target.value)}/></Fld>
     <Btns onSave={save} onClose={closeModal} label="Save"/>
   </Modal>;
 }
